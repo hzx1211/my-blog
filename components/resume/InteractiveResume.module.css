@@ -1,0 +1,106 @@
+.page {
+  --resume-x: 72vw;
+  --resume-y: 22vh;
+  background: #071726;
+  overflow-x: clip;
+}
+
+.gridBackdrop {
+  background-image:
+    linear-gradient(rgba(112, 199, 232, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112, 199, 232, 0.055) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.8) 58%, transparent 100%);
+}
+
+.spotlight {
+  background: radial-gradient(
+    520px circle at var(--resume-x) var(--resume-y),
+    rgba(73, 196, 238, 0.14),
+    transparent 68%
+  );
+}
+
+.photoFrame {
+  isolation: isolate;
+}
+
+.photoFrame::before {
+  position: absolute;
+  inset: -18px;
+  z-index: -2;
+  content: "";
+  border: 1px solid rgba(107, 213, 245, 0.45);
+  border-radius: 42% 58% 48% 52% / 55% 42% 58% 45%;
+  animation: resume-orbit 12s linear infinite;
+}
+
+.photoFrame::after {
+  position: absolute;
+  inset: -34px;
+  z-index: -3;
+  content: "";
+  border: 1px dashed rgba(255, 159, 107, 0.28);
+  border-radius: 56% 44% 61% 39% / 47% 61% 39% 53%;
+  animation: resume-orbit-reverse 18s linear infinite;
+}
+
+.scanline {
+  background: linear-gradient(180deg, transparent, rgba(99, 214, 246, 0.18), transparent);
+  animation: resume-scan 4.8s ease-in-out infinite;
+}
+
+.timelineRail {
+  background: linear-gradient(to bottom, #49c4ee, rgba(73, 196, 238, 0.08));
+}
+
+@keyframes resume-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes resume-orbit-reverse {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes resume-scan {
+  0%, 100% { transform: translateY(-130%); opacity: 0; }
+  18%, 82% { opacity: 1; }
+  50% { transform: translateY(130%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photoFrame::before,
+  .photoFrame::after,
+  .scanline {
+    animation: none;
+  }
+}
+
+@media print {
+  .page {
+    background: white !important;
+    color: #111827 !important;
+  }
+
+  .screenOnly,
+  .gridBackdrop,
+  .spotlight,
+  .scanline {
+    display: none !important;
+  }
+
+  .page section {
+    break-inside: avoid;
+  }
+
+  .printSurface {
+    border-color: #d1d5db !important;
+    background: white !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+  }
+
+  .printMuted {
+    color: #4b5563 !important;
+  }
+}

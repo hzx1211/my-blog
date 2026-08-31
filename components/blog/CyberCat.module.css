@@ -1,0 +1,195 @@
+.stage {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 16px 18px rgba(2, 13, 22, 0.42));
+}
+
+.actor {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 72%;
+  will-change: transform;
+}
+
+.sprite {
+  position: absolute;
+  inset: 0;
+  background-image: url('/cybercat-sprite-v2.png');
+  background-position-y: 0%;
+  background-repeat: no-repeat;
+  background-size: 500% 400%;
+  image-rendering: pixelated;
+}
+
+.actor[data-action='idle'],
+.actor[data-action='thinking'] {
+  animation: rest 4s ease-in-out infinite;
+}
+
+.actor[data-action='blink'] .sprite {
+  animation: blinkFrames 0.38s steps(1, end) 1 both;
+}
+
+.actor[data-action='thinking'] .sprite {
+  background-position-x: 25%;
+}
+
+.actor[data-action='pet'] {
+  animation: pet 1.3s ease-in-out both;
+}
+
+.actor[data-action='pet'] .sprite {
+  background-position-y: 33.3333%;
+  animation: petFrames 1.3s steps(1, end) 1 both;
+}
+
+.actor[data-action='groom'] {
+  animation: groom 3.2s ease-in-out both;
+}
+
+.actor[data-action='groom'] .sprite {
+  background-position-y: 66.6667%;
+  animation: groomFrames 3.2s steps(1, end) 1 both;
+}
+
+.actor[data-action='eat'] {
+  animation: eat 3s ease-in-out both;
+}
+
+.actor[data-action='eat'] .sprite {
+  background-image: url('/cybercat-eat-v1.png');
+  background-position-y: 0%;
+  background-size: 500% 100%;
+  animation: eatFrames 3s steps(1, end) 1 both;
+}
+
+.actor[data-action='roll'] {
+  animation: roll 2.6s cubic-bezier(.34, .04, .2, 1) both;
+}
+
+.actor[data-action='roll'] .sprite {
+  background-position-y: 100%;
+  animation: rollFrames 2.6s steps(1, end) 1 both;
+}
+
+.actor[data-action='walk'] {
+  animation: walkOut 1.16s ease-in-out infinite;
+}
+
+.actor[data-action='walk-back'] {
+  animation: walkBack 1.16s ease-in-out infinite;
+}
+
+.actor[data-action='walk'] .sprite,
+.actor[data-action='walk-back'] .sprite {
+  background-image: url('/cybercat-walk-v1.png');
+  background-position-y: 100%;
+  background-size: 400% 133.3333%;
+  image-rendering: auto;
+  animation: walkFrames .46s steps(1, end) infinite;
+}
+
+.thinkingDot {
+  animation: thinking 1s ease-in-out infinite;
+}
+
+.stage[data-reduced='true'] .actor,
+.stage[data-reduced='true'] .sprite,
+.stage[data-reduced='true'] .thinkingDot {
+  animation: none !important;
+}
+
+@keyframes rest {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.006); }
+}
+
+@keyframes blinkFrames {
+  0%, 32.99% { background-position-x: 0%; }
+  33%, 68.99% { background-position-x: 75%; }
+  69%, 100% { background-position-x: 0%; }
+}
+
+@keyframes petFrames {
+  0%, 27.99% { background-position-x: 0%; }
+  28%, 67.99% { background-position-x: 50%; }
+  68%, 100% { background-position-x: 75%; }
+}
+
+@keyframes groomFrames {
+  0%, 17.99% { background-position-x: 0%; }
+  18%, 37.99% { background-position-x: 25%; }
+  38%, 57.99% { background-position-x: 50%; }
+  58%, 77.99% { background-position-x: 75%; }
+  78%, 100% { background-position-x: 100%; }
+}
+
+@keyframes eatFrames {
+  0%, 19.99% { background-position-x: 0%; }
+  20%, 39.99% { background-position-x: 25%; }
+  40%, 59.99% { background-position-x: 50%; }
+  60%, 79.99% { background-position-x: 75%; }
+  80%, 100% { background-position-x: 100%; }
+}
+
+@keyframes rollFrames {
+  0%, 19.99% { background-position-x: 0%; }
+  20%, 39.99% { background-position-x: 25%; }
+  40%, 59.99% { background-position-x: 50%; }
+  60%, 79.99% { background-position-x: 75%; }
+  80%, 100% { background-position-x: 100%; }
+}
+
+@keyframes pet {
+  0%, 100% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(3px) rotate(-1.5deg) scale(1.015); }
+  68% { transform: translateY(5px) rotate(1.2deg) scaleX(1.03) scaleY(.96); }
+}
+
+@keyframes groom {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  24% { transform: translateY(2px) rotate(-2.5deg); }
+  50% { transform: translateY(4px) rotate(2deg); }
+  76% { transform: translateY(2px) rotate(-1.5deg); }
+}
+
+@keyframes eat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  24% { transform: translateY(3px) scale(.99); }
+  50% { transform: translateY(5px) scale(1.01); }
+  74% { transform: translateY(2px) scale(1); }
+}
+
+@keyframes roll {
+  0%, 12% { transform: translateX(0) translateY(0) scale(1); }
+  30% { transform: translateX(-3px) translateY(2px) scale(.99); }
+  50% { transform: translateX(0) translateY(4px) scale(1); }
+  70% { transform: translateX(3px) translateY(2px) scale(1.01); }
+  86% { transform: translateX(1px) translateY(0) scale(1); }
+  100% { transform: translateX(0) translateY(0) scale(1); }
+}
+
+@keyframes walkOut {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-2px) rotate(-.45deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-1px) rotate(.35deg); }
+}
+
+@keyframes walkBack {
+  0%, 100% { transform: scaleX(-1) translateY(0) rotate(0deg); }
+  25% { transform: scaleX(-1) translateY(-2px) rotate(-.45deg); }
+  50% { transform: scaleX(-1) translateY(0) rotate(0deg); }
+  75% { transform: scaleX(-1) translateY(-1px) rotate(.35deg); }
+}
+
+@keyframes walkFrames {
+  0%, 24.99% { background-position-x: 0%; }
+  25%, 49.99% { background-position-x: 33.3333%; }
+  50%, 74.99% { background-position-x: 66.6667%; }
+  75%, 100% { background-position-x: 100%; }
+}
+
+@keyframes thinking {
+  0%, 100% { opacity: .25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}

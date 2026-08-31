@@ -1,0 +1,28 @@
+[
+  {
+    "id": "a6696831-61cf-4db1-91f4-7c745c682947",
+    "city": "广州",
+    "place": "白云山",
+    "latitude": 23.158393,
+    "longitude": 113.290044,
+    "visitedAt": null,
+    "note": "夜爬一起",
+    "coverUrl": "/api/media/1788173032291-eb29d4c3-af8d-4880-964e-d5ab8f138cc0.jpg",
+    "isPublic": true,
+    "createdAt": "2026-08-31T10:43:53.919Z",
+    "updatedAt": "2026-08-31T10:43:53.919Z"
+  },
+  {
+    "id": "5fd70c44-5261-4db1-86c3-88dbe1eb769e",
+    "city": "惠州",
+    "place": "西湖",
+    "latitude": 23.097931,
+    "longitude": 114.395902,
+    "visitedAt": "2026-08-29",
+    "note": "湖边散步很惬意",
+    "coverUrl": null,
+    "isPublic": true,
+    "createdAt": "2026-08-29T15:01:51.288Z",
+    "updatedAt": "2026-08-29T15:01:53.862Z"
+  }
+]

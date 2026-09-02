@@ -91,7 +91,7 @@ export default function CyberCat() {
       }
 
       const bounds = mapElement.getBoundingClientRect();
-      const catZoneTop = window.innerHeight - (window.innerWidth >= 640 ? 250 : 205);
+      const catZoneTop = window.innerHeight - (window.innerWidth >= 640 ? 250 : 280);
       const catZoneLeft = window.innerWidth - (window.innerWidth >= 640 ? 240 : 190);
       const overlapsCatZone =
         bounds.right > catZoneLeft &&
@@ -263,7 +263,7 @@ export default function CyberCat() {
             y: { duration: 0.4, ease: 'easeOut' },
           }}
       className={
-        "global-floating-layer fixed bottom-16 right-2 z-[120] flex flex-col items-end sm:bottom-24 sm:right-8 " +
+        "global-floating-layer fixed bottom-[calc(var(--blog-music-widget-height,72px)+0.75rem+env(safe-area-inset-bottom))] right-2 z-[120] flex flex-col items-end sm:bottom-24 sm:right-8 " +
         (isMapRetracted ? "pointer-events-none" : "")
       }
       style={{ willChange: 'transform, opacity' }}

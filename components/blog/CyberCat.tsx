@@ -19,6 +19,10 @@ type ConversationMessage = {
 type CatAction = 'idle' | 'blink' | 'groom' | 'roll' | 'pet' | 'eat' | 'walk' | 'walk-back';
 type MapAvoidance = 'none' | 'retract';
 
+type CyberCatProps = {
+  mobileVisible: boolean;
+};
+
 const ACTION_DURATIONS: Record<Exclude<CatAction, 'idle'>, number> = {
   blink: 380,
   groom: 3200,
@@ -36,7 +40,7 @@ const PET_LINES = [
   '本喵批准你继续摸头。',
 ];
 
-export default function CyberCat() {
+export default function CyberCat({ mobileVisible }: CyberCatProps) {
   const prefersReducedMotion = useReducedMotion();
   const [hasMounted, setHasMounted] = useState(false);
   const shouldReduceMotion = hasMounted && Boolean(prefersReducedMotion);
@@ -68,6 +72,13 @@ export default function CyberCat() {
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mobileVisible) {
+      setShowInput(false);
+      setSpeech(null);
+    }
+  }, [mobileVisible]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -266,6 +277,8 @@ export default function CyberCat() {
         "global-floating-layer fixed bottom-[calc(var(--blog-music-widget-height,72px)+0.75rem+env(safe-area-inset-bottom))] right-2 z-[120] flex flex-col items-end sm:bottom-24 sm:right-8 " +
         (isMapRetracted ? "pointer-events-none" : "")
       }
+      data-mobile-widget="true"
+      data-mobile-visible={mobileVisible ? 'true' : 'false'}
       style={{ willChange: 'transform, opacity' }}
       aria-label="像素猫 AI 助手煤球"
       aria-hidden={isMapRetracted ? true : undefined}

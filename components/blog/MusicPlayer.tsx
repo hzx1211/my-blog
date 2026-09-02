@@ -12,13 +12,17 @@ type MusicTrack = {
   createdAt: string;
 };
 
+type MusicPlayerProps = {
+  mobileVisible: boolean;
+};
+
 function formatTime(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0:00";
   const seconds = Math.floor(value % 60).toString().padStart(2, "0");
   return `${Math.floor(value / 60)}:${seconds}`;
 }
 
-export default function MusicPlayer() {
+export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
   const prefersReducedMotion = useReducedMotion();
   const audioRef = useRef<HTMLAudioElement>(null);
   const playerRef = useRef<HTMLElement>(null);
@@ -47,7 +51,9 @@ export default function MusicPlayer() {
 
     const root = document.documentElement;
     const updateWidgetHeight = () => {
-      root.style.setProperty("--blog-music-widget-height", `${playerElement.offsetHeight}px`);
+      const mobileHidden = !mobileVisible && window.innerWidth < 640;
+      const height = mobileHidden ? 72 : playerElement.offsetHeight;
+      root.style.setProperty("--blog-music-widget-height", `${height}px`);
     };
 
     updateWidgetHeight();
@@ -58,7 +64,7 @@ export default function MusicPlayer() {
       resizeObserver?.disconnect();
       root.style.removeProperty("--blog-music-widget-height");
     };
-  }, [hasMounted]);
+  }, [hasMounted, mobileVisible]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -250,8 +256,10 @@ export default function MusicPlayer() {
             x: { duration: 1.05, ease: [0.4, 0, 0.2, 1] },
             opacity: { delay: 0.3, duration: 0.35 },
             y: { delay: 0.3, duration: 0.35 },
-          }}
+      }}
       data-music-player="true"
+      data-mobile-widget="true"
+      data-mobile-visible={mobileVisible ? "true" : "false"}
       data-music-expanded={expanded ? "true" : "false"}
       className="pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] sm:bottom-6 sm:left-7"
       style={{ willChange: "transform, opacity" }}

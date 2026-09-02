@@ -42,6 +42,25 @@ export default function MusicPlayer() {
   }, []);
 
   useEffect(() => {
+    const playerElement = playerRef.current;
+    if (!playerElement) return;
+
+    const root = document.documentElement;
+    const updateWidgetHeight = () => {
+      root.style.setProperty("--blog-music-widget-height", `${playerElement.offsetHeight}px`);
+    };
+
+    updateWidgetHeight();
+    const resizeObserver = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateWidgetHeight);
+    resizeObserver?.observe(playerElement);
+
+    return () => {
+      resizeObserver?.disconnect();
+      root.style.removeProperty("--blog-music-widget-height");
+    };
+  }, [hasMounted]);
+
+  useEffect(() => {
     if (!hasMounted) return;
 
     let animationFrame: number | null = null;
@@ -66,7 +85,7 @@ export default function MusicPlayer() {
       const mapBounds = mapElement.getBoundingClientRect();
       const desktop = window.innerWidth >= 640;
       const baseLeft = desktop ? 28 : 12;
-      const baseBottom = desktop ? 24 : 168;
+      const baseBottom = desktop ? 24 : 16;
       const playerWidth = playerElement.offsetWidth;
       const playerHeight = playerElement.offsetHeight;
       const playerRight = baseLeft + playerWidth;
@@ -232,7 +251,9 @@ export default function MusicPlayer() {
             opacity: { delay: 0.3, duration: 0.35 },
             y: { delay: 0.3, duration: 0.35 },
           }}
-      className="pointer-events-none fixed bottom-[10.5rem] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] sm:bottom-6 sm:left-7"
+      data-music-player="true"
+      data-music-expanded={expanded ? "true" : "false"}
+      className="pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] sm:bottom-6 sm:left-7"
       style={{ willChange: "transform, opacity" }}
       aria-label="博客音乐角"
       aria-hidden={mapRetracted ? true : undefined}

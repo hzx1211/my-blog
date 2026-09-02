@@ -51,7 +51,7 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
 
     const root = document.documentElement;
     const updateWidgetHeight = () => {
-      const mobileHidden = !mobileVisible && window.innerWidth < 640;
+      const mobileHidden = !mobileVisible && window.innerWidth < 1024;
       const height = mobileHidden ? 72 : playerElement.offsetHeight;
       root.style.setProperty("--blog-music-widget-height", `${height}px`);
     };
@@ -89,7 +89,7 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
       }
 
       const mapBounds = mapElement.getBoundingClientRect();
-      const desktop = window.innerWidth >= 640;
+      const desktop = window.innerWidth >= 1024;
       const baseLeft = desktop ? 28 : 12;
       const baseBottom = desktop ? 24 : 16;
       const playerWidth = playerElement.offsetWidth;
@@ -261,7 +261,7 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
       data-mobile-widget="true"
       data-mobile-visible={mobileVisible ? "true" : "false"}
       data-music-expanded={expanded ? "true" : "false"}
-      className="pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] sm:bottom-6 sm:left-7"
+      className="pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] lg:bottom-6 lg:left-7"
       style={{ willChange: "transform, opacity" }}
       aria-label="博客音乐角"
       aria-hidden={mapRetracted ? true : undefined}

@@ -33,7 +33,7 @@ body {
   backdrop-filter: blur(16px);
 }
 
-@media (max-width: 639px) {
+@media (max-width: 1023px) {
   [data-mobile-widget="true"][data-mobile-visible="false"] {
     display: none;
   }

@@ -21,7 +21,7 @@ export default function PublicSiteWidgets() {
       <button
         type="button"
         onClick={() => setMobileWidgetsOpen((open) => !open)}
-        className="mobile-widgets-toggle fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-[140] flex h-12 w-12 items-center justify-center rounded-full text-teal-50 transition hover:-translate-y-0.5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white sm:hidden"
+        className="mobile-widgets-toggle fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] right-3 z-[140] flex h-12 w-12 items-center justify-center rounded-full text-teal-50 transition hover:-translate-y-0.5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-white lg:hidden"
         aria-label={mobileWidgetsOpen ? "收起音乐角和像素猫" : "打开音乐角和像素猫"}
         aria-expanded={mobileWidgetsOpen}
       >

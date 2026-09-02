@@ -12,17 +12,13 @@ type MusicTrack = {
   createdAt: string;
 };
 
-type MusicPlayerProps = {
-  mobileVisible: boolean;
-};
-
 function formatTime(value: number) {
   if (!Number.isFinite(value) || value <= 0) return "0:00";
   const seconds = Math.floor(value % 60).toString().padStart(2, "0");
   return `${Math.floor(value / 60)}:${seconds}`;
 }
 
-export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
+export default function MusicPlayer() {
   const prefersReducedMotion = useReducedMotion();
   const audioRef = useRef<HTMLAudioElement>(null);
   const playerRef = useRef<HTMLElement>(null);
@@ -51,9 +47,7 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
 
     const root = document.documentElement;
     const updateWidgetHeight = () => {
-      const mobileHidden = !mobileVisible && window.innerWidth < 1024;
-      const height = mobileHidden ? 72 : playerElement.offsetHeight;
-      root.style.setProperty("--blog-music-widget-height", `${height}px`);
+      root.style.setProperty("--blog-music-widget-height", `${playerElement.offsetHeight}px`);
     };
 
     updateWidgetHeight();
@@ -64,7 +58,7 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
       resizeObserver?.disconnect();
       root.style.removeProperty("--blog-music-widget-height");
     };
-  }, [hasMounted, mobileVisible]);
+  }, [hasMounted]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -258,8 +252,6 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
             y: { delay: 0.3, duration: 0.35 },
       }}
       data-music-player="true"
-      data-mobile-widget="true"
-      data-mobile-visible={mobileVisible ? "true" : "false"}
       data-music-expanded={expanded ? "true" : "false"}
       className="pointer-events-none fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-3 z-[110] w-[min(20.5rem,calc(100vw-1.5rem))] lg:bottom-6 lg:left-7"
       style={{ willChange: "transform, opacity" }}
@@ -301,19 +293,19 @@ export default function MusicPlayer({ mobileVisible }: MusicPlayerProps) {
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#668274] transition hover:bg-[#eef7ef] hover:text-[#138e5f]"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#668274] transition hover:bg-[#eef7ef] hover:text-[#138e5f] lg:h-8 lg:w-8"
             aria-label={expanded ? "收起歌单" : "展开歌单"}
           >
-            {expanded ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+            {expanded ? <ChevronDown className="h-4 w-4 lg:h-[17px] lg:w-[17px]" /> : <ChevronUp className="h-4 w-4 lg:h-[17px] lg:w-[17px]" />}
           </button>
           <button
             type="button"
             onClick={() => docked ? setDocked(false) : dockPlayer()}
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#138e5f] focus-visible:ring-offset-2 ${docked ? "bg-[#063b28] text-white shadow-[0_6px_18px_rgba(4,39,24,0.2)] hover:bg-[#138e5f]" : "text-[#668274] hover:bg-[#eef7ef] hover:text-[#138e5f]"}`}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#138e5f] focus-visible:ring-offset-2 lg:h-10 lg:w-10 ${docked ? "bg-[#063b28] text-white shadow-[0_6px_18px_rgba(4,39,24,0.2)] hover:bg-[#138e5f]" : "text-[#668274] hover:bg-[#eef7ef] hover:text-[#138e5f]"}`}
             aria-label={docked ? "展开音乐角" : "向左收起音乐角"}
             title={docked ? "展开音乐角" : "向左收起"}
           >
-            {docked ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            {docked ? <ChevronRight className="h-4 w-4 lg:h-[18px] lg:w-[18px]" /> : <ChevronLeft className="h-4 w-4 lg:h-[18px] lg:w-[18px]" />}
           </button>
         </div>
 

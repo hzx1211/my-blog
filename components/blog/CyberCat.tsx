@@ -44,6 +44,7 @@ export default function CyberCat({ mobileVisible }: CyberCatProps) {
   const prefersReducedMotion = useReducedMotion();
   const [hasMounted, setHasMounted] = useState(false);
   const shouldReduceMotion = hasMounted && Boolean(prefersReducedMotion);
+  const [isCompactViewport, setIsCompactViewport] = useState(false);
   const [speech, setSpeech] = useState<string | null>(null);
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -55,6 +56,7 @@ export default function CyberCat({ mobileVisible }: CyberCatProps) {
   const idleCyclesRef = useRef(0);
   const conversationRef = useRef<ConversationMessage[]>([]);
   const previousMapAvoidanceRef = useRef<MapAvoidance>('none');
+  const previousMobileCatOpenRef = useRef(mobileVisible);
 
   const speak = useCallback((text: string, duration = 7000) => {
     if (mapAvoidance !== 'none') return;
@@ -74,11 +76,28 @@ export default function CyberCat({ mobileVisible }: CyberCatProps) {
   }, []);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const updateViewport = () => setIsCompactViewport(mediaQuery.matches);
+
+    updateViewport();
+    mediaQuery.addEventListener('change', updateViewport);
+    return () => mediaQuery.removeEventListener('change', updateViewport);
+  }, []);
+
+  useEffect(() => {
     if (!mobileVisible) {
       setShowInput(false);
       setSpeech(null);
     }
   }, [mobileVisible]);
+
+  useEffect(() => {
+    const wasOpen = previousMobileCatOpenRef.current;
+    previousMobileCatOpenRef.current = mobileVisible;
+
+    if (!isCompactViewport || wasOpen === mobileVisible) return;
+    runCatAction(mobileVisible ? 'walk-back' : 'walk');
+  }, [isCompactViewport, mobileVisible, runCatAction]);
 
   useEffect(() => {
     if (!hasMounted) return;
@@ -261,27 +280,34 @@ export default function CyberCat({ mobileVisible }: CyberCatProps) {
 
   const visualAction = catAction === 'idle' && isThinking ? 'thinking' : catAction;
   const isMapRetracted = mapAvoidance === 'retract';
+  const isCatVisible = !isCompactViewport || mobileVisible;
+  const catHorizontalOffset = isMapRetracted ? 232 : isCatVisible ? 0 : 86;
+  const catVerticalOffset = isCatVisible ? 0 : 14;
 
   return (
     <motion.aside
       initial={{ opacity: 0, x: 0, y: 18 }}
-      animate={{ opacity: 1, x: isMapRetracted ? 232 : 0, y: 0 }}
+      animate={{
+        opacity: isCatVisible ? 1 : 0,
+        x: catHorizontalOffset,
+        y: catVerticalOffset,
+        scale: isCatVisible ? 1 : 0.84,
+      }}
       transition={shouldReduceMotion
         ? { duration: 0 }
         : {
-            x: { type: 'tween', duration: 1.16, ease: 'easeInOut' },
-            opacity: { duration: 0.28, ease: 'easeOut' },
-            y: { duration: 0.4, ease: 'easeOut' },
+            x: { type: 'tween', duration: 0.72, ease: 'easeInOut' },
+            opacity: { duration: 0.42, ease: 'easeOut' },
+            y: { duration: 0.52, ease: 'easeOut' },
+            scale: { duration: 0.52, ease: 'easeOut' },
           }}
       className={
         "global-floating-layer fixed bottom-[calc(var(--blog-music-widget-height,72px)+0.75rem+env(safe-area-inset-bottom))] right-2 z-[120] flex flex-col items-end lg:bottom-24 lg:right-8 " +
-        (isMapRetracted ? "pointer-events-none" : "")
+        (isMapRetracted || !isCatVisible ? "pointer-events-none" : "")
       }
-      data-mobile-widget="true"
-      data-mobile-visible={mobileVisible ? 'true' : 'false'}
       style={{ willChange: 'transform, opacity' }}
       aria-label="像素猫 AI 助手煤球"
-      aria-hidden={isMapRetracted ? true : undefined}
+      aria-hidden={isMapRetracted || !isCatVisible ? true : undefined}
     >
       <AnimatePresence>
         {mapAvoidance === 'none' && speech && (

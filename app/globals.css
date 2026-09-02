@@ -33,12 +33,6 @@ body {
   backdrop-filter: blur(16px);
 }
 
-@media (max-width: 1023px) {
-  [data-mobile-widget="true"][data-mobile-visible="false"] {
-    display: none;
-  }
-}
-
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

@@ -30,6 +30,20 @@ function serviceKey() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "";
 }
 
+function adminFetch(apiKey: string): typeof fetch {
+  if (!apiKey.startsWith("sb_secret_")) return fetch;
+
+  // Opaque secret keys belong in `apikey`; they are not JWTs and must not be
+  // sent as `Authorization: Bearer ...` by the Supabase JS default fetch.
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (headers.get("Authorization") === `Bearer ${apiKey}`) {
+      headers.delete("Authorization");
+    }
+    return fetch(input, { ...init, headers });
+  };
+}
+
 function isProductionRuntime() {
   return process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 }
@@ -46,8 +60,10 @@ export function getSupabaseAdmin(): SupabaseClient {
   }
 
   if (!cachedAdminClient) {
-    cachedAdminClient = createClient(supabaseUrl(), serviceKey(), {
+    const apiKey = serviceKey();
+    cachedAdminClient = createClient(supabaseUrl(), apiKey, {
       auth: { autoRefreshToken: false, persistSession: false },
+      global: { fetch: adminFetch(apiKey) },
     });
   }
 
@@ -185,3 +201,4 @@ export async function deleteSupabaseMedia(value: string) {
     throw new PersistentStorageUnavailableError("媒体文件删除失败，请稍后重试。");
   }
 }
+

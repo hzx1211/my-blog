@@ -12,8 +12,27 @@ if (!url || !key) {
   process.exit(1);
 }
 
+if (key.startsWith("sb_publishable_")) {
+  console.error("SUPABASE_SECRET_KEY 配置成了 publishable key；请使用 sb_secret_ key 或 service_role key。");
+  process.exit(1);
+}
+
+function adminFetch(apiKey) {
+  if (!apiKey.startsWith("sb_secret_")) return fetch;
+
+  // Opaque secret keys belong in `apikey`; they are not JWT Bearer tokens.
+  return async (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (headers.get("Authorization") === `Bearer ${apiKey}`) {
+      headers.delete("Authorization");
+    }
+    return fetch(input, { ...init, headers });
+  };
+}
+
 const supabase = createClient(url, key, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: { fetch: adminFetch(key) },
 });
 const bucket = "blog-media";
 const sources = [
@@ -144,3 +163,4 @@ try {
   console.error(error instanceof Error ? error.message : "导入失败");
   process.exitCode = 1;
 }
+

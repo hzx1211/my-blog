@@ -30,6 +30,13 @@ function serviceKey() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "";
 }
 
+function adminKeyErrorMessage() {
+  if (serviceKey().startsWith("sb_publishable_")) {
+    return "Supabase 配置错误：Vercel 的 SUPABASE_SECRET_KEY 当前是公开的 sb_publishable_ key。请替换为 Supabase 的 sb_secret_ key（或旧版 service_role key）后重新部署。";
+  }
+  return "线上数据库尚未配置：请设置 SUPABASE_URL 和 SUPABASE_SECRET_KEY。";
+}
+
 function adminFetch(apiKey: string): typeof fetch {
   if (!apiKey.startsWith("sb_secret_")) return fetch;
 
@@ -49,14 +56,13 @@ function isProductionRuntime() {
 }
 
 export function isSupabaseConfigured() {
-  return Boolean(supabaseUrl() && serviceKey());
+  const apiKey = serviceKey();
+  return Boolean(supabaseUrl() && apiKey && !apiKey.startsWith("sb_publishable_"));
 }
 
 export function getSupabaseAdmin(): SupabaseClient {
   if (!isSupabaseConfigured()) {
-    throw new PersistentStorageUnavailableError(
-      "线上数据库尚未配置：请设置 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY。",
-    );
+    throw new PersistentStorageUnavailableError(adminKeyErrorMessage());
   }
 
   if (!cachedAdminClient) {
@@ -123,9 +129,7 @@ export async function writeContent<T>(key: string, fileName: string, payload: T)
   }
 
   if (isProductionRuntime()) {
-    throw new PersistentStorageUnavailableError(
-      "线上数据库尚未配置，修改没有保存。请在 Vercel 环境变量中配置 Supabase 后重新部署。",
-    );
+    throw new PersistentStorageUnavailableError(`${adminKeyErrorMessage()} 修改没有保存。`);
   }
 
   const filePath = localFilePath(fileName);

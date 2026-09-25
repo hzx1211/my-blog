@@ -6,12 +6,12 @@ import { ArrowUpRight, Sparkles, Menu, X, BookOpen } from "lucide-react";
 
 const AVATAR = "/portrait.jpg";
 
-export default function BlogHeader({ className }: { className?: string }) {
+export default function BlogHeader({ className, initialPostCount = 0 }: { className?: string; initialPostCount?: number }) {
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isCTAHovered, setIsCTAHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [postCount, setPostCount] = useState(0);
+  const [postCount, setPostCount] = useState(initialPostCount);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsMounted(true), 0);
@@ -20,21 +20,31 @@ export default function BlogHeader({ className }: { className?: string }) {
 
   useEffect(() => {
     let mounted = true;
+    const refreshCount = () => {
+      fetch("/api/posts?pageSize=1", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("文章数量请求失败");
+          return (await response.json()) as { total?: number };
+        })
+        .then((data) => {
+          if (mounted && typeof data.total === "number") setPostCount(data.total);
+        })
+        .catch(() => {
+          // Keep the server-rendered count when the API is unavailable.
+        });
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") refreshCount();
+    };
 
-    fetch("/api/posts?pageSize=1", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("文章数量请求失败");
-        return (await response.json()) as { total?: number };
-      })
-      .then((data) => {
-        if (mounted && typeof data.total === "number") setPostCount(data.total);
-      })
-      .catch(() => {
-        // Keep the static hero content usable when the API is unavailable.
-      });
+    refreshCount();
+    window.addEventListener("focus", refreshCount);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshCount);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 

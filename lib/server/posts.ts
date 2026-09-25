@@ -231,17 +231,27 @@ export async function getPostById(id: string) {
 }
 
 export async function getPostBySlug(slug: string, publishedOnly = false) {
+  const decodedSlug = decodeStoredSlug(slug);
   return (
     (await readPosts()).find(
-      (post) => post.slug === slug && (!publishedOnly || post.status === "published"),
+      (post) => post.slug === decodedSlug && (!publishedOnly || post.status === "published"),
     ) ?? null
   );
 }
 
+function decodeStoredSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
 export async function incrementPostViews(slug: string) {
+  const decodedSlug = decodeStoredSlug(slug);
   const posts = await readPosts();
   const index = posts.findIndex(
-    (post) => post.slug === slug && post.status === "published",
+    (post) => post.slug === decodedSlug && post.status === "published",
   );
 
   if (index === -1) {

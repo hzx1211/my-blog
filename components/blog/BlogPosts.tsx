@@ -37,53 +37,6 @@ type DisplayPost = ApiPost & {
 
 const categories: Category[] = ["全部", "技术", "美食专栏", "旅行", "生活", "思考", "成长"];
 
-const fallbackPosts: ApiPost[] = [
-  {
-    id: "post-slow-life",
-    slug: "slow-life",
-    title: "把生活调成慢速播放",
-    excerpt: "忙起来的时候，给自己留一段没有目标的路。散步、做饭，还有把窗帘拉开这件小事。",
-    category: "生活",
-    readTime: 4,
-    views: 0,
-    tags: ["生活", "观察"],
-    publishedAt: "2026-08-24T08:00:00.000Z",
-  },
-  {
-    id: "post-small-note",
-    slug: "small-note",
-    title: "我如何开始记录一件小事",
-    excerpt: "不是为了把每一天变得特别，而是练习看见那些已经发生的、微小但可靠的好。",
-    category: "思考",
-    readTime: 6,
-    views: 0,
-    tags: ["思考", "写作"],
-    publishedAt: "2026-08-16T08:00:00.000Z",
-  },
-  {
-    id: "post-build-things",
-    slug: "build-things-that-help",
-    title: "从会用工具，到真正解决问题",
-    excerpt: "学新东西最有趣的阶段，往往不是知道答案，而是开始能把答案交给真实的人使用。",
-    category: "成长",
-    readTime: 8,
-    views: 0,
-    tags: ["成长", "开发"],
-    publishedAt: "2026-08-05T08:00:00.000Z",
-  },
-  {
-    id: "post-slow-city",
-    slug: "slow-city",
-    title: "去一座不赶时间的城市",
-    excerpt: "旅途不一定要塞满景点。沿着河边走一下午，也足够成为一段值得回想的路线。",
-    category: "生活",
-    readTime: 5,
-    views: 0,
-    tags: ["旅行", "城市"],
-    publishedAt: "2026-07-28T08:00:00.000Z",
-  },
-];
-
 function iconFor(category: PostCategory) {
   if (category === "技术") return Code2;
   if (category === "美食专栏") return UtensilsCrossed;
@@ -119,28 +72,40 @@ function toDisplayPosts(items: ApiPost[]) {
   }));
 }
 
-export default function BlogPosts() {
+export default function BlogPosts({ initialPosts }: { initialPosts: ApiPost[] }) {
   const prefersReducedMotion = useReducedMotion();
   const [activeCategory, setActiveCategory] = useState<Category>("全部");
-  const [posts, setPosts] = useState<DisplayPost[]>(toDisplayPosts(fallbackPosts));
+  const [posts, setPosts] = useState<DisplayPost[]>(() => toDisplayPosts(initialPosts));
 
   useEffect(() => {
     let mounted = true;
 
-    fetch("/api/posts?pageSize=12", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("文章接口请求失败");
-        return (await response.json()) as { items?: ApiPost[] };
-      })
-      .then((data) => {
-        if (mounted && data.items?.length) setPosts(toDisplayPosts(data.items));
-      })
-      .catch(() => {
-        // Keep the seeded content visible if the API is temporarily unavailable.
-      });
+    const refreshPosts = () => {
+      void fetch("/api/posts?pageSize=50", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) throw new Error("文章接口请求失败");
+          return (await response.json()) as { items?: ApiPost[] };
+        })
+        .then((data) => {
+          if (mounted && Array.isArray(data.items)) setPosts(toDisplayPosts(data.items));
+        })
+        .catch(() => {
+          // Keep the server-rendered articles visible if a refresh fails.
+        });
+    };
+
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") refreshPosts();
+    };
+
+    refreshPosts();
+    window.addEventListener("focus", refreshPosts);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       mounted = false;
+      window.removeEventListener("focus", refreshPosts);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
 

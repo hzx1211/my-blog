@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Sparkles, Menu, X, BookOpen } from "lucide-react";
 
 const AVATAR = "/portrait.jpg";
 
-export default function BlogHeader({ className, initialPostCount = 0 }: { className?: string; initialPostCount?: number }) {
+export default function BlogHeader({ className, initialPostCount = 0, avatarUrl = AVATAR }: { className?: string; initialPostCount?: number; avatarUrl?: string }) {
   const [isNavHovered, setIsNavHovered] = useState(false);
   const [isCTAHovered, setIsCTAHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -266,7 +267,7 @@ export default function BlogHeader({ className, initialPostCount = 0 }: { classN
               transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" as const }}
               className="w-[88px] h-[88px] rounded-full overflow-hidden border-4 border-white/70 shadow-xl mb-6"
             >
-              <img src={AVATAR} alt="黄志雄的头像" className="w-full h-full object-cover" />
+              <Image src={avatarUrl} alt="黄志雄的头像" width={88} height={88} unoptimized className="h-full w-full object-cover" />
             </motion.div>
 
             {/* Heading */}

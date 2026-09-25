@@ -13,6 +13,7 @@ import {
   LogOut,
   MapPinned,
   Music2,
+  UserRound,
 } from "lucide-react";
 
 type NavigationItem = {
@@ -27,6 +28,7 @@ const navigationItems: NavigationItem[] = [
   { href: "/admin/posts", label: "文章管理", detail: "新建与编辑", icon: FileText },
   { href: "/admin/travel", label: "旅行地图", detail: "足迹与家的标点", icon: MapPinned },
   { href: "/admin/music", label: "音乐角", detail: "全站播放器歌单", icon: Music2 },
+  { href: "/admin/profile", label: "站点头像", detail: "首页与关于我照片", icon: UserRound },
   { href: "/admin/resume", label: "个人简历", detail: "资料、技能与经历", icon: BadgeCheck },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { ArrowRight, Mail, Sparkles, Code2, Train, Camera, UtensilsCrossed } from "lucide-react";
 
 const facts = [
@@ -10,7 +11,7 @@ const facts = [
   { icon: UtensilsCrossed, title: "热爱美食", desc: "喜欢下厨，也愿意分享家常菜和旅途中遇见的味道" },
 ];
 
-export default function AboutWithFooter({ className }: { className?: string }) {
+export default function AboutWithFooter({ className, avatarUrl = "/portrait.jpg" }: { className?: string; avatarUrl?: string }) {
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -88,8 +89,8 @@ export default function AboutWithFooter({ className }: { className?: string }) {
               className="w-full lg:w-[480px] lg:sticky lg:top-[80px]"
             >
               <div className="rounded-[32px] overflow-hidden border border-[#042718]/10 shadow-[0_20px_60px_rgba(4,39,24,0.10)] bg-white">
-                <div className="h-[420px] md:h-[520px] overflow-hidden">
-                  <img src="/portrait.jpg" alt="黄志雄的照片" className="w-full h-full object-cover" />
+                <div className="relative h-[420px] overflow-hidden md:h-[520px]">
+                  <Image src={avatarUrl} alt="黄志雄的照片" fill unoptimized sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col gap-2">
                   <h3 className="font-onest text-[22px] font-semibold text-[#042718]">黄志雄</h3>

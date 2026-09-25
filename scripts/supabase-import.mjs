@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 const root = process.cwd();
 const apply = process.argv.includes("--apply");
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+const key = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !key) {
   console.error("缺少 SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY（或 SUPABASE_SECRET_KEY）。");
@@ -17,22 +17,8 @@ if (key.startsWith("sb_publishable_")) {
   process.exit(1);
 }
 
-function adminFetch(apiKey) {
-  if (!apiKey.startsWith("sb_secret_")) return fetch;
-
-  // Opaque secret keys belong in `apikey`; they are not JWT Bearer tokens.
-  return async (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (headers.get("Authorization") === `Bearer ${apiKey}`) {
-      headers.delete("Authorization");
-    }
-    return fetch(input, { ...init, headers });
-  };
-}
-
 const supabase = createClient(url, key, {
-  auth: { autoRefreshToken: false, persistSession: false },
-  global: { fetch: adminFetch(key) },
+  auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
 });
 const bucket = "blog-media";
 const sources = [

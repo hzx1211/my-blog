@@ -27,7 +27,7 @@ function supabaseUrl() {
 }
 
 function serviceKey() {
-  return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || "";
+  return process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 }
 
 function adminKeyErrorMessage() {
@@ -35,20 +35,6 @@ function adminKeyErrorMessage() {
     return "Supabase 配置错误：Vercel 的 SUPABASE_SECRET_KEY 当前是公开的 sb_publishable_ key。请替换为 Supabase 的 sb_secret_ key（或旧版 service_role key）后重新部署。";
   }
   return "线上数据库尚未配置：请设置 SUPABASE_URL 和 SUPABASE_SECRET_KEY。";
-}
-
-function adminFetch(apiKey: string): typeof fetch {
-  if (!apiKey.startsWith("sb_secret_")) return fetch;
-
-  // Opaque secret keys belong in `apikey`; they are not JWTs and must not be
-  // sent as `Authorization: Bearer ...` by the Supabase JS default fetch.
-  return async (input, init) => {
-    const headers = new Headers(init?.headers);
-    if (headers.get("Authorization") === `Bearer ${apiKey}`) {
-      headers.delete("Authorization");
-    }
-    return fetch(input, { ...init, headers });
-  };
 }
 
 function isProductionRuntime() {
@@ -68,8 +54,7 @@ export function getSupabaseAdmin(): SupabaseClient {
   if (!cachedAdminClient) {
     const apiKey = serviceKey();
     cachedAdminClient = createClient(supabaseUrl(), apiKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-      global: { fetch: adminFetch(apiKey) },
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
     });
   }
 
@@ -88,17 +73,29 @@ async function readLocalJson<T>(fileName: string, fallback: T): Promise<T> {
   }
 }
 
+type ContentQueryResult = { error: { code?: string; message?: string } | null };
+
+async function runContentQuery<T extends ContentQueryResult>(query: () => PromiseLike<T>): Promise<T> {
+  let result = await query();
+  // PostgREST can briefly reject the gateway's freshly issued service JWT.
+  // Retry only that transient authentication error; all other errors surface.
+  for (const delay of [1000, 2000]) {
+    if (result.error?.code !== "PGRST303" || result.error.message !== "JWT issued at future") break;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    result = await query();
+  }
+  return result;
+}
+
 /**
  * Uses Postgres on Vercel/when configured locally; local development without
  * Supabase continues to use the checked-in JSON seed files.
  */
 export async function readContent<T>(key: string, fileName: string, fallback: T): Promise<T> {
   if (isSupabaseConfigured()) {
-    const { data, error } = await getSupabaseAdmin()
-      .from(contentTable)
-      .select("payload")
-      .eq("id", key)
-      .maybeSingle();
+    const { data, error } = await runContentQuery(() =>
+      getSupabaseAdmin().from(contentTable).select("payload").eq("id", key).maybeSingle(),
+    );
 
     if (error) {
       console.error(`Supabase read failed for ${key}`, error);
@@ -106,9 +103,12 @@ export async function readContent<T>(key: string, fileName: string, fallback: T)
     }
 
     if (data?.payload !== undefined) return data.payload as T;
+    if (isProductionRuntime()) {
+      console.error(`Supabase content row missing for ${key}`);
+      throw new PersistentStorageUnavailableError("线上内容记录缺失，请检查 Supabase 数据导入。");
+    }
   } else if (isProductionRuntime()) {
-    console.error("Supabase is not configured for this production runtime");
-    return readLocalJson(fileName, fallback);
+    throw new PersistentStorageUnavailableError(adminKeyErrorMessage());
   }
 
   return readLocalJson(fileName, fallback);
@@ -116,9 +116,9 @@ export async function readContent<T>(key: string, fileName: string, fallback: T)
 
 export async function writeContent<T>(key: string, fileName: string, payload: T): Promise<void> {
   if (isSupabaseConfigured()) {
-    const { error } = await getSupabaseAdmin().from(contentTable).upsert(
-      { id: key, payload, updated_at: new Date().toISOString() } satisfies ContentRow,
-      { onConflict: "id" },
+    const row = { id: key, payload, updated_at: new Date().toISOString() } satisfies ContentRow;
+    const { error } = await runContentQuery(() =>
+      getSupabaseAdmin().from(contentTable).upsert(row, { onConflict: "id" }),
     );
 
     if (error) {

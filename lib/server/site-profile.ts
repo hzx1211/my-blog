@@ -18,8 +18,8 @@ export class SiteProfileValidationError extends Error {
 }
 
 export const defaultSiteProfile: SiteProfile = {
-  homeAvatarUrl: "/portrait.jpg",
-  aboutAvatarUrl: "/portrait.jpg",
+  homeAvatarUrl: "/resume-profile.jpg",
+  aboutAvatarUrl: "/resume-profile.jpg",
 };
 
 const dataFile = "site-profile.json";
@@ -88,3 +88,4 @@ export async function readSiteProfile(): Promise<SiteProfile> {
 export async function writeSiteProfile(profile: SiteProfile) {
   await writeContent("site-profile", dataFile, profile);
 }
+

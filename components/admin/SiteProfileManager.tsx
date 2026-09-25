@@ -13,7 +13,7 @@ type SiteProfile = {
 
 type AvatarField = keyof SiteProfile;
 
-const fallbackAvatar = "/portrait.jpg";
+const fallbackAvatar = "/resume-profile.jpg";
 
 const avatarFields: Array<{
   key: AvatarField;
@@ -168,3 +168,4 @@ export default function SiteProfileManager() {
     </div>
   );
 }
+

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Sparkles, Menu, X, BookOpen } from "lucide-react";
 
-const AVATAR = "/portrait.jpg";
+const AVATAR = "/resume-profile.jpg";
 
 export default function BlogHeader({ className, initialPostCount = 0, avatarUrl = AVATAR }: { className?: string; initialPostCount?: number; avatarUrl?: string }) {
   const [isNavHovered, setIsNavHovered] = useState(false);
@@ -372,3 +372,4 @@ export default function BlogHeader({ className, initialPostCount = 0, avatarUrl 
     </>
   );
 }
+

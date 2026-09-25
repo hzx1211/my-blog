@@ -11,7 +11,7 @@ const facts = [
   { icon: UtensilsCrossed, title: "热爱美食", desc: "喜欢下厨，也愿意分享家常菜和旅途中遇见的味道" },
 ];
 
-export default function AboutWithFooter({ className, avatarUrl = "/portrait.jpg" }: { className?: string; avatarUrl?: string }) {
+export default function AboutWithFooter({ className, avatarUrl = "/resume-profile.jpg" }: { className?: string; avatarUrl?: string }) {
   return (
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -189,3 +189,4 @@ export default function AboutWithFooter({ className, avatarUrl = "/portrait.jpg"
     </>
   );
 }
+

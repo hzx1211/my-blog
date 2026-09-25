@@ -55,6 +55,11 @@ export function getSupabaseAdmin(): SupabaseClient {
     const apiKey = serviceKey();
     cachedAdminClient = createClient(supabaseUrl(), apiKey, {
       auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+      global: {
+        // These reads back user-edited content; never let Next's fetch cache
+        // serve the song list (or other JSON content) from an earlier deploy.
+        fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+      },
     });
   }
 

@@ -2,6 +2,9 @@ node_modules/
 .next/
 .npm-cache/
 .env.local
+.env*
+.vercel/
+.vercel-global/
 npm-debug.log*
 .codex-tmp/
 *.tsbuildinfo

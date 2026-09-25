@@ -1,0 +1,9 @@
+.git
+.codex-tmp
+.npm-cache
+.vercel
+.vercel-global
+.next
+node_modules
+.env*
+*.tsbuildinfo

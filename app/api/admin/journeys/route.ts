@@ -6,6 +6,7 @@ import {
   readJourneys,
   writeJourneys,
 } from "@/lib/server/journeys";
+import { PersistentStorageUnavailableError } from "@/lib/server/persistence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,7 +17,15 @@ function unauthorized() {
 
 export async function GET() {
   if (!hasAdminSession()) return unauthorized();
-  return NextResponse.json({ items: readJourneys() }, { headers: { "Cache-Control": "no-store" } });
+  try {
+    return NextResponse.json({ items: await readJourneys() }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.error("Journey list could not be read", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记录暂时无法读取" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -24,14 +33,18 @@ export async function POST(request: Request) {
 
   try {
     const memory = createJourney(await request.json());
-    const items = readJourneys();
-    writeJourneys([memory, ...items]);
+    const items = await readJourneys();
+    await writeJourneys([memory, ...items]);
     return NextResponse.json({ item: memory }, { status: 201 });
   } catch (error) {
     if (error instanceof JourneyValidationError) {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "旅行记忆保存失败" }, { status: 400 });
+    console.error("Journey save failed", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记忆保存失败" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
   }
 }

@@ -1,6 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { isSupabasePublicMediaUrl, readContent, writeContent } from "@/lib/server/persistence";
 
 export const postCategories = ["技术", "美食专栏", "旅行", "生活", "思考", "成长"] as const;
 export type PostCategory = (typeof postCategories)[number];
@@ -50,8 +49,7 @@ export class PostValidationError extends Error {
   }
 }
 
-const dataDirectory = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDirectory, "posts.json");
+const dataFile = "posts.json";
 
 function sortPosts(posts: BlogPost[]) {
   return [...posts].sort((left, right) => {
@@ -59,14 +57,6 @@ function sortPosts(posts: BlogPost[]) {
     const rightTime = new Date(right.updatedAt).getTime();
     return rightTime - leftTime;
   });
-}
-
-function ensureDataFile() {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, "[]\n", "utf8");
-  }
 }
 
 function asText(value: unknown) {
@@ -107,7 +97,10 @@ function parseMedia(value: unknown): PostMedia[] {
       const record = item as Record<string, unknown>;
       const type = asText(record.type);
       const url = asText(record.url);
-      if ((type !== "image" && type !== "video") || !/^\/api\/media\/[A-Za-z0-9._-]+$/.test(url)) {
+      if (
+        (type !== "image" && type !== "video") ||
+        (!/^\/api\/media\/[A-Za-z0-9._-]+$/.test(url) && !isSupabasePublicMediaUrl(url))
+      ) {
         return null;
       }
 
@@ -166,39 +159,29 @@ export function parsePostPayload(input: unknown): PostPayload {
   return { title, slug, excerpt, content, category, readTime, tags, media, status };
 }
 
-export function readPosts(): BlogPost[] {
-  ensureDataFile();
+export async function readPosts(): Promise<BlogPost[]> {
+  const value = await readContent<unknown>("posts", dataFile, []);
+  if (!Array.isArray(value)) return [];
 
-  try {
-    const value = JSON.parse(fs.readFileSync(dataFile, "utf8")) as unknown;
-
-    if (!Array.isArray(value)) {
-      throw new Error("posts.json must contain an array");
-    }
-
-    return sortPosts(
-      (value as BlogPost[]).map((post) => ({
-        ...post,
-        category: normalizeStoredCategory(post.category),
-        views: normalizeViewCount(post.views),
-      })),
-    );
-  } catch {
-    return [];
-  }
+  return sortPosts(
+    (value as BlogPost[]).map((post) => ({
+      ...post,
+      category: normalizeStoredCategory(post.category),
+      views: normalizeViewCount(post.views),
+    })),
+  );
 }
 
-export function listPosts(options: { publishedOnly?: boolean; category?: string } = {}) {
-  return readPosts().filter((post) => {
+export async function listPosts(options: { publishedOnly?: boolean; category?: string } = {}) {
+  return (await readPosts()).filter((post) => {
     const matchesStatus = !options.publishedOnly || post.status === "published";
     const matchesCategory = !options.category || post.category === options.category;
     return matchesStatus && matchesCategory;
   });
 }
 
-export function writePosts(posts: BlogPost[]) {
-  ensureDataFile();
-  fs.writeFileSync(dataFile, `${JSON.stringify(sortPosts(posts), null, 2)}\n`, "utf8");
+export async function writePosts(posts: BlogPost[]) {
+  await writeContent("posts", dataFile, sortPosts(posts));
 }
 
 export function createPost(input: unknown, existingPosts: BlogPost[]) {
@@ -243,20 +226,20 @@ function uniqueSlug(slug: string, posts: BlogPost[], currentId?: string) {
   return `${base}-${Date.now()}`;
 }
 
-export function getPostById(id: string) {
-  return readPosts().find((post) => post.id === id) ?? null;
+export async function getPostById(id: string) {
+  return (await readPosts()).find((post) => post.id === id) ?? null;
 }
 
-export function getPostBySlug(slug: string, publishedOnly = false) {
+export async function getPostBySlug(slug: string, publishedOnly = false) {
   return (
-    readPosts().find(
+    (await readPosts()).find(
       (post) => post.slug === slug && (!publishedOnly || post.status === "published"),
     ) ?? null
   );
 }
 
-export function incrementPostViews(slug: string) {
-  const posts = readPosts();
+export async function incrementPostViews(slug: string) {
+  const posts = await readPosts();
   const index = posts.findIndex(
     (post) => post.slug === slug && post.status === "published",
   );
@@ -271,7 +254,7 @@ export function incrementPostViews(slug: string) {
   };
   const updatedPosts = [...posts];
   updatedPosts[index] = updatedPost;
-  writePosts(updatedPosts);
+  await writePosts(updatedPosts);
 
   return updatedPost.views;
 }

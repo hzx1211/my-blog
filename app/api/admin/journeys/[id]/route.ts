@@ -6,6 +6,7 @@ import {
   updateJourney,
   writeJourneys,
 } from "@/lib/server/journeys";
+import { PersistentStorageUnavailableError } from "@/lib/server/persistence";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,7 +21,16 @@ export async function PATCH(
 ) {
   if (!hasAdminSession()) return unauthorized();
 
-  const items = readJourneys();
+  let items;
+  try {
+    items = await readJourneys();
+  } catch (error) {
+    console.error("Journey list could not be read", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记录暂时无法读取" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
+  }
   const existing = items.find((item) => item.id === params.id);
   if (!existing) {
     return NextResponse.json({ message: "旅行记忆不存在" }, { status: 404 });
@@ -28,14 +38,18 @@ export async function PATCH(
 
   try {
     const updated = updateJourney(existing, await request.json());
-    writeJourneys(items.map((item) => item.id === existing.id ? updated : item));
+    await writeJourneys(items.map((item) => item.id === existing.id ? updated : item));
     return NextResponse.json({ item: updated });
   } catch (error) {
     if (error instanceof JourneyValidationError) {
       return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ message: "旅行记忆保存失败" }, { status: 400 });
+    console.error("Journey update failed", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记忆保存失败" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
   }
 }
 
@@ -45,12 +59,29 @@ export async function DELETE(
 ) {
   if (!hasAdminSession()) return unauthorized();
 
-  const items = readJourneys();
+  let items;
+  try {
+    items = await readJourneys();
+  } catch (error) {
+    console.error("Journey list could not be read", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记录暂时无法读取" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
+  }
   const existing = items.find((item) => item.id === params.id);
   if (!existing) {
     return NextResponse.json({ message: "旅行记忆不存在" }, { status: 404 });
   }
 
-  writeJourneys(items.filter((item) => item.id !== existing.id));
+  try {
+    await writeJourneys(items.filter((item) => item.id !== existing.id));
+  } catch (error) {
+    console.error("Journey delete failed", error);
+    return NextResponse.json(
+      { message: error instanceof PersistentStorageUnavailableError ? error.message : "旅行记忆删除失败" },
+      { status: error instanceof PersistentStorageUnavailableError ? 503 : 500 },
+    );
+  }
   return NextResponse.json({ deleted: true });
 }

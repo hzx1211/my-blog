@@ -30,7 +30,7 @@
 - **地图**：Leaflet、React Leaflet、高德地图 Web 服务 API
 - **服务端**：Next.js Route Handlers
 - **认证**：HTTP-only Cookie + HMAC 会话签名
-- **数据**：JSON 文件、媒体文件和服务端 API
+- **数据**：本地开发使用 JSON 文件；线上使用 Supabase PostgreSQL 与 Supabase Storage
 - **部署**：GitHub + Vercel
 
 ## 本地运行
@@ -66,6 +66,12 @@ cp .env.local.example .env.local
 BLOG_ADMIN_PASSWORD=你的强管理员密码
 BLOG_SESSION_SECRET=不少于32位的随机字符串
 
+# 线上内容数据库和对象存储。服务端密钥只能放在服务端环境变量中。
+SUPABASE_URL=https://你的项目.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=你的服务端密钥
+NEXT_PUBLIC_SUPABASE_URL=https://你的项目.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=你的anon或publishable公钥
+
 # 旅行地点自动转换为经纬度：高德开放平台 Web 服务 API Key
 AMAP_API_KEY=你的高德Web服务Key
 
@@ -75,7 +81,16 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 OPENAI_MODEL=gpt-4o-mini
 ```
 
-环境变量只在服务端读取。不要把 `.env.local`、API Key 或管理员密码提交到 GitHub；修改环境变量后需要重启开发服务。
+`SUPABASE_SERVICE_ROLE_KEY`（或 Supabase 新版的 `SUPABASE_SECRET_KEY`）只在服务端使用；它有完整数据权限，绝不能加 `NEXT_PUBLIC_` 前缀。浏览器只使用 anon/publishable 公钥。不要把 `.env.local`、API Key 或管理员密码提交到 GitHub；修改本地环境变量后需要重启开发服务。
+
+## 启用线上数据保存
+
+1. 在 Supabase 创建项目，在 **SQL Editor** 执行 [`supabase/schema.sql`](supabase/schema.sql)。它会创建内容表 `blog_content` 和公开媒体桶 `blog-media`。
+2. 在项目根目录创建 `.env.local`（可从 `.env.local.example` 复制），填入 Supabase URL、服务端密钥和浏览器公钥。不要把服务端密钥发到聊天或提交到仓库。
+3. 首次导入仓库里现有的文章、旅行、音乐、简历和旧媒体：先执行 `npm run supabase:import` 预览，再执行 `npm run supabase:import -- --apply`。导入只会新增线上尚不存在的内容，不覆盖已有记录；导入前请确认 Supabase 中没有需要保留的同名内容。
+4. 在 Vercel 项目的 **Settings → Environment Variables** 添加 `SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY`、`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`，至少选中 Production；然后重新部署。
+
+完成后，后台修改文章、旅行、音乐、简历和浏览量会写入 Supabase；新上传的媒体会直传 Supabase Storage，不依赖 Vercel 临时文件系统。本地未设置 Supabase 时仍使用 `data/*.json`，便于开发。若线上缺少服务端数据库配置，后台会明确报错而不会假装保存成功。
 
 ## 主要接口
 
@@ -109,7 +124,7 @@ public/               图片、音频、视频和动画素材
 
 <https://my-blog-two-puce.vercel.app>
 
-需要注意：当前文章、旅行、音乐、简历和浏览量主要依赖本地 JSON 与媒体文件写入。Vercel 属于无状态 Serverless 平台，运行时写入不适合作为长期数据存储。若要正式运营，建议继续迁移到数据库和对象存储，例如 PostgreSQL、Supabase、云数据库或对象存储服务。
+Vercel 项目代码已准备好连接 Supabase，但线上持久化需要完成上方 SQL、Vercel 环境变量及重新部署步骤。Vercel Serverless 的运行时文件系统不是持久存储，因此正式线上内容和上传媒体应保存在 Supabase。
 
 上线前建议检查：
 

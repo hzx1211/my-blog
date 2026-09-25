@@ -16,6 +16,7 @@ import {
   Video,
   X,
 } from "lucide-react";
+import { uploadAdminMedia } from "./uploadMedia";
 import {
   createBlankPostForm,
   fieldClassName,
@@ -112,22 +113,13 @@ export default function ArticleEditor({ postId }: ArticleEditorProps) {
 
     try {
       for (const file of selectedFiles.slice(0, availableSlots)) {
-        const upload = new FormData();
-        upload.append("file", file);
-        const response = await fetch("/api/admin/upload", { method: "POST", body: upload });
-        const data = (await response.json().catch(() => ({}))) as {
-          item?: PostMedia;
-          message?: string;
-        };
-
-        if (!response.ok || !data.item) {
-          throw new Error(data.message || "媒体上传失败");
-        }
+        const item = await uploadAdminMedia(file);
+        if (item.type !== "image" && item.type !== "video") throw new Error("文章媒体只支持照片或视频");
 
         uploaded += 1;
         setForm((current) => ({
           ...current,
-          media: [...current.media, data.item as PostMedia].slice(0, 12),
+          media: [...current.media, item as PostMedia].slice(0, 12),
         }));
       }
 

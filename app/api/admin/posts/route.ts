@@ -6,6 +6,7 @@ import {
   readPosts,
   writePosts,
 } from "@/lib/server/posts";
+import { PersistentStorageUnavailableError } from "@/lib/server/persistence";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,12 @@ function badRequest(error: unknown) {
     return NextResponse.json({ message: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ message: "请求格式无效" }, { status: 400 });
+  if (error instanceof PersistentStorageUnavailableError) {
+    return NextResponse.json({ message: error.message }, { status: 503 });
+  }
+
+  console.error("Article save failed", error);
+  return NextResponse.json({ message: "文章保存失败，请检查内容后重试" }, { status: 500 });
 }
 
 export async function GET() {
@@ -26,7 +32,11 @@ export async function GET() {
     return unauthorized();
   }
 
-  return NextResponse.json({ items: readPosts() });
+  try {
+    return NextResponse.json({ items: await readPosts() });
+  } catch (error) {
+    return badRequest(error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -35,9 +45,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const posts = readPosts();
+    const posts = await readPosts();
     const post = createPost(await request.json(), posts);
-    writePosts([post, ...posts]);
+    await writePosts([post, ...posts]);
     return NextResponse.json({ item: post }, { status: 201 });
   } catch (error) {
     return badRequest(error);

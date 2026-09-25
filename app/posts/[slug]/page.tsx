@@ -13,7 +13,7 @@ type PostPageProps = {
 };
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
-  const post = getPostBySlug(params.slug, true);
+  const post = await getPostBySlug(params.slug, true);
 
   return {
     title: post ? `${post.title} · 黄志雄的数字花园` : "文章不存在 · 黄志雄的数字花园",
@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   };
 }
 
-export default function PostPage({ params }: PostPageProps) {
-  const post = getPostBySlug(params.slug, true);
+export default async function PostPage({ params }: PostPageProps) {
+  const post = await getPostBySlug(params.slug, true);
 
   if (!post) {
     notFound();

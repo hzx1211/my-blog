@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const category = searchParams.get("category");
   const page = Math.max(1, Number(searchParams.get("page") ?? 1));
   const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize") ?? 12)));
-  const publishedPosts = listPosts({ publishedOnly: true }).filter(
+  const publishedPosts = (await listPosts({ publishedOnly: true })).filter(
     (post) => !category || post.category === category,
   );
   const start = (page - 1) * pageSize;

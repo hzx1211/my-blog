@@ -7,7 +7,7 @@ export async function POST(
   _request: Request,
   { params }: { params: { slug: string } },
 ) {
-  const views = incrementPostViews(params.slug);
+  const views = await incrementPostViews(params.slug);
 
   if (views === null) {
     return NextResponse.json({ message: "文章不存在" }, { status: 404 });

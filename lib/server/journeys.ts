@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
+import { isSupabasePublicMediaUrl, readContent, writeContent } from "@/lib/server/persistence";
 
 export type JourneyMemory = {
   id: string;
@@ -25,15 +24,7 @@ export class JourneyValidationError extends Error {
   }
 }
 
-const dataDirectory = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDirectory, "journeys.json");
-
-function ensureDataFile() {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, "[]\n", "utf8");
-  }
-}
+const dataFile = "journeys.json";
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -57,7 +48,7 @@ function parseCoordinate(value: unknown, label: string, minimum: number, maximum
 function parseCoverUrl(value: unknown) {
   const url = asText(value);
   if (!url) return null;
-  if (!/^\/api\/media\/[A-Za-z0-9._-]+$/.test(url)) {
+  if (!/^\/api\/media\/[A-Za-z0-9._-]+$/.test(url) && !isSupabasePublicMediaUrl(url)) {
     throw new JourneyValidationError("旅行照片地址无效");
   }
 
@@ -126,29 +117,22 @@ function sortJourneys(items: JourneyMemory[]) {
   });
 }
 
-export function readJourneys() {
-  ensureDataFile();
-
-  try {
-    const value = JSON.parse(fs.readFileSync(dataFile, "utf8")) as unknown;
-    if (!Array.isArray(value)) return [];
-    return sortJourneys(value.map(normalizeJourney).filter((item): item is JourneyMemory => item !== null));
-  } catch {
-    return [];
-  }
+export async function readJourneys() {
+  const value = await readContent<unknown>("journeys", dataFile, []);
+  if (!Array.isArray(value)) return [];
+  return sortJourneys(value.map(normalizeJourney).filter((item): item is JourneyMemory => item !== null));
 }
 
-export function writeJourneys(items: JourneyMemory[]) {
-  ensureDataFile();
-  fs.writeFileSync(dataFile, `${JSON.stringify(sortJourneys(items), null, 2)}\n`, "utf8");
+export async function writeJourneys(items: JourneyMemory[]) {
+  await writeContent("journeys", dataFile, sortJourneys(items));
 }
 
-export function listJourneys(options: { publicOnly?: boolean } = {}) {
-  return readJourneys().filter((item) => !options.publicOnly || item.isPublic);
+export async function listJourneys(options: { publicOnly?: boolean } = {}) {
+  return (await readJourneys()).filter((item) => !options.publicOnly || item.isPublic);
 }
 
-export function getJourneyById(id: string) {
-  return readJourneys().find((item) => item.id === id) ?? null;
+export async function getJourneyById(id: string) {
+  return (await readJourneys()).find((item) => item.id === id) ?? null;
 }
 
 export function createJourney(input: unknown): JourneyMemory {

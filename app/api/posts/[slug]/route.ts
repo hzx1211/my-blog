@@ -7,7 +7,7 @@ export async function GET(
   _request: Request,
   { params }: { params: { slug: string } },
 ) {
-  const post = getPostBySlug(params.slug, true);
+  const post = await getPostBySlug(params.slug, true);
 
   if (!post) {
     return NextResponse.json({ message: "文章不存在" }, { status: 404 });

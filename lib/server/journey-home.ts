@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { readContent, writeContent } from "@/lib/server/persistence";
 
 export type JourneyHome = {
   label: string;
@@ -18,15 +17,7 @@ export class JourneyHomeValidationError extends Error {
   }
 }
 
-const dataDirectory = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDirectory, "journey-home.json");
-
-function ensureDataFile() {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, "null\n", "utf8");
-  }
-}
+const dataFile = "journey-home.json";
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -73,30 +64,26 @@ function parseHome(input: unknown, includeUpdatedAt = false): Omit<JourneyHome, 
   return { ...home, updatedAt };
 }
 
-export function readJourneyHome() {
-  ensureDataFile();
-
+export async function readJourneyHome() {
+  const value = await readContent<unknown>("journey_home", dataFile, null);
+  if (value === null) return null;
   try {
-    const value = JSON.parse(fs.readFileSync(dataFile, "utf8")) as unknown;
-    if (value === null) return null;
     return parseHome(value, true) as JourneyHome;
   } catch {
     return null;
   }
 }
 
-export function saveJourneyHome(input: unknown) {
+export async function saveJourneyHome(input: unknown) {
   const home = {
     ...(parseHome(input) as Omit<JourneyHome, "updatedAt">),
     updatedAt: new Date().toISOString(),
   } satisfies JourneyHome;
 
-  ensureDataFile();
-  fs.writeFileSync(dataFile, `${JSON.stringify(home, null, 2)}\n`, "utf8");
+  await writeContent("journey_home", dataFile, home);
   return home;
 }
 
-export function clearJourneyHome() {
-  ensureDataFile();
-  fs.writeFileSync(dataFile, "null\n", "utf8");
+export async function clearJourneyHome() {
+  await writeContent("journey_home", dataFile, null);
 }

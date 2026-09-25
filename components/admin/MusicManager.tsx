@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Music2, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { uploadAdminMedia } from "./uploadMedia";
 import {
   fieldClassName,
   responseMessage,
@@ -49,12 +50,14 @@ export default function MusicManager() {
     setNotice(null);
 
     try {
-      const upload = new FormData();
-      upload.append("file", file);
-      upload.append("title", title);
-      upload.append("artist", artist);
+      const media = await uploadAdminMedia(file);
+      if (media.type !== "audio") throw new Error("请选择音频文件");
 
-      const response = await fetch("/api/admin/music", { method: "POST", body: upload });
+      const response = await fetch("/api/admin/music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, artist, url: media.url }),
+      });
       const data = (await response.json().catch(() => ({}))) as { item?: MusicTrack; message?: string };
 
       if (!response.ok || !data.item) {

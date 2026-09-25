@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
+import { isSupabasePublicMediaUrl, readContent, writeContent } from "@/lib/server/persistence";
 
 export type MusicTrack = {
   id: string;
@@ -10,22 +9,14 @@ export type MusicTrack = {
   createdAt: string;
 };
 
-const dataDirectory = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDirectory, "music.json");
-
-function ensureDataFile() {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, "[]\n", "utf8");
-  }
-}
+const dataFile = "music.json";
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
 function isMediaUrl(value: string) {
-  return /^\/api\/media\/[A-Za-z0-9._-]+$/.test(value);
+  return /^\/api\/media\/[A-Za-z0-9._-]+$/.test(value) || isSupabasePublicMediaUrl(value);
 }
 
 function normalizeTrack(value: unknown): MusicTrack | null {
@@ -42,25 +33,18 @@ function normalizeTrack(value: unknown): MusicTrack | null {
   return { id, title, artist, url, createdAt };
 }
 
-export function readMusicTracks() {
-  ensureDataFile();
+export async function readMusicTracks() {
+  const value = await readContent<unknown>("music", dataFile, []);
+  if (!Array.isArray(value)) return [];
 
-  try {
-    const value = JSON.parse(fs.readFileSync(dataFile, "utf8")) as unknown;
-    if (!Array.isArray(value)) return [];
-
-    return value
-      .map(normalizeTrack)
-      .filter((track): track is MusicTrack => track !== null)
-      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  } catch {
-    return [];
-  }
+  return value
+    .map(normalizeTrack)
+    .filter((track): track is MusicTrack => track !== null)
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
-export function writeMusicTracks(tracks: MusicTrack[]) {
-  ensureDataFile();
-  fs.writeFileSync(dataFile, `${JSON.stringify(tracks, null, 2)}\n`, "utf8");
+export async function writeMusicTracks(tracks: MusicTrack[]) {
+  await writeContent("music", dataFile, tracks);
 }
 
 export function createMusicTrack(input: { title: unknown; artist: unknown; url: unknown }): MusicTrack {

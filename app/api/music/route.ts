@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   return NextResponse.json(
-    { items: readMusicTracks() },
+    { items: await readMusicTracks() },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

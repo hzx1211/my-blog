@@ -201,7 +201,7 @@ export default function InteractiveResume({ resume }: { resume: ResumeData }) {
         >
           <div className={`${styles.photoFrame} relative mx-auto aspect-[4/5] w-[min(78vw,330px)]`}>
             <div className="absolute inset-0 overflow-hidden rounded-[46%_54%_42%_58%/40%_44%_56%_60%] border border-white/20 bg-[#0d2940] shadow-[0_30px_90px_rgba(0,0,0,0.38)]">
-              <Image src={profile.photoUrl} alt={`${profile.name}的简历头像`} fill priority unoptimized={profile.photoUrl.startsWith("/api/media/")} sizes="(min-width: 1024px) 330px, 78vw" className="object-cover" />
+              <Image src={profile.photoUrl} alt={`${profile.name}的简历头像`} fill priority unoptimized sizes="(min-width: 1024px) 330px, 78vw" className="object-cover" />
               <div className={`${styles.scanline} pointer-events-none absolute inset-x-0 top-0 h-24`} aria-hidden="true" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#071726]/32 via-transparent to-white/[0.04]" />
             </div>

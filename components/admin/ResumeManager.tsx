@@ -25,6 +25,7 @@ import type {
   ResumeSkillGroup,
   ResumeSkillIcon,
 } from "@/lib/resume";
+import { uploadAdminMedia } from "./uploadMedia";
 import { responseMessage, type AdminNotice } from "./shared";
 
 type EditorSection = "profile" | "skills" | "experience" | "education" | "project";
@@ -212,15 +213,11 @@ export default function ResumeManager() {
     setUploading(true);
     setNotice(null);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      if (!response.ok) throw new Error(await responseMessage(response));
-      const data = (await response.json()) as { item?: { type?: string; url?: string } };
-      if (data.item?.type !== "image" || !data.item.url) throw new Error("上传结果不是有效图片");
+      const item = await uploadAdminMedia(file);
+      if (item.type !== "image" || !item.url) throw new Error("上传结果不是有效图片");
       updateResume((current) => ({
         ...current,
-        profile: { ...current.profile, photoUrl: data.item!.url! },
+        profile: { ...current.profile, photoUrl: item.url },
       }));
       setNotice({ type: "success", text: "新头像已上传，点击“保存简历”后同步到前台" });
     } catch (error) {
@@ -289,7 +286,7 @@ export default function ResumeManager() {
               <div className="grid gap-5 rounded-[2rem] border border-[#dbe8de] bg-white p-5 sm:p-7 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <div>
                   <div className="relative mx-auto aspect-[4/5] w-full max-w-[210px] overflow-hidden rounded-[2rem] bg-[#e8f2e9]">
-                    <Image src={resume.profile.photoUrl} alt="简历头像预览" fill unoptimized={resume.profile.photoUrl.startsWith("/api/media/")} sizes="210px" className="object-cover" />
+                    <Image src={resume.profile.photoUrl} alt="简历头像预览" fill unoptimized sizes="210px" className="object-cover" />
                   </div>
                   <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[#9fc3a8] bg-[#f4faf5] px-3 py-3 text-sm font-semibold text-[#49715a] transition hover:bg-[#eaf5ec]">
                     {uploading ? <LoaderCircle className="animate-spin" size={16} /> : <ImagePlus size={16} />}

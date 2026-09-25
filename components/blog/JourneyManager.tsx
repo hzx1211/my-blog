@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Camera, Check, Crosshair, LoaderCircle, MapPin, Pencil, Plus, Save, Trash2, UploadCloud, X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { uploadAdminMedia } from "../admin/uploadMedia";
 import { type LocationGeocodeResult, useLocationGeocoder } from "./useLocationGeocoder";
 
 const JourneyLocationPicker = dynamic(() => import("./JourneyLocationPicker"), {
@@ -34,11 +35,6 @@ type JourneyForm = {
   note: string;
   coverUrl: string;
   isPublic: boolean;
-};
-
-type UploadedMedia = {
-  type: "image" | "video";
-  url: string;
 };
 
 const blankForm: JourneyForm = {
@@ -191,15 +187,10 @@ export default function JourneyManager() {
     setNotice(null);
 
     try {
-      const upload = new FormData();
-      upload.append("file", file);
-      const response = await fetch("/api/admin/upload", { method: "POST", body: upload });
-      const data = (await response.json().catch(() => ({}))) as { item?: UploadedMedia; message?: string };
-      if (!response.ok || !data.item || data.item.type !== "image") {
-        throw new Error(data.message || "旅行照片上传失败");
-      }
+      const item = await uploadAdminMedia(file);
+      if (item.type !== "image") throw new Error("旅行封面只支持照片格式");
 
-      setForm((current) => ({ ...current, coverUrl: data.item!.url }));
+      setForm((current) => ({ ...current, coverUrl: item.url }));
       setNotice({ type: "success", text: "旅行照片已添加，保存记忆后会展示在地图下方。" });
     } catch (error) {
       setNotice({ type: "error", text: error instanceof Error ? error.message : "旅行照片上传失败" });

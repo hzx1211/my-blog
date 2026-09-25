@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { isSupabasePublicMediaUrl, readContent, writeContent } from "@/lib/server/persistence";
 import {
   defaultResumeData,
   type ResumeData,
@@ -19,16 +18,8 @@ export class ResumeValidationError extends Error {
   }
 }
 
-const dataDirectory = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDirectory, "resume.json");
+const dataFile = "resume.json";
 const skillIcons: ResumeSkillIcon[] = ["server", "vision", "foundation"];
-
-function ensureDataFile() {
-  fs.mkdirSync(dataDirectory, { recursive: true });
-  if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, `${JSON.stringify(defaultResumeData, null, 2)}\n`, "utf8");
-  }
-}
 
 function asObject(value: unknown, label: string) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -85,7 +76,8 @@ function parseProfile(value: unknown): ResumeProfile {
   const photoUrl = text(record.photoUrl, "头像地址", 240);
   if (
     !/^\/[A-Za-z0-9/_-]+\.(?:jpe?g|png|webp|gif)$/i.test(photoUrl) &&
-    !/^\/api\/media\/[A-Za-z0-9._-]+$/.test(photoUrl)
+    !/^\/api\/media\/[A-Za-z0-9._-]+$/.test(photoUrl) &&
+    !isSupabasePublicMediaUrl(photoUrl)
   ) {
     throw new ResumeValidationError("头像必须是本站图片地址或后台上传的图片");
   }
@@ -228,17 +220,16 @@ export function parseResumePayload(input: unknown) {
   return parseResume(input, false);
 }
 
-export function readResume(): ResumeData {
-  ensureDataFile();
+export async function readResume(): Promise<ResumeData> {
+  const value = await readContent<unknown>("resume", dataFile, defaultResumeData);
   try {
-    return parseResume(JSON.parse(fs.readFileSync(dataFile, "utf8")) as unknown, true);
+    return parseResume(value, true);
   } catch (error) {
     console.error("Resume data could not be read", error);
     return defaultResumeData;
   }
 }
 
-export function writeResume(resume: ResumeData) {
-  ensureDataFile();
-  fs.writeFileSync(dataFile, `${JSON.stringify(resume, null, 2)}\n`, "utf8");
+export async function writeResume(resume: ResumeData) {
+  await writeContent("resume", dataFile, resume);
 }
